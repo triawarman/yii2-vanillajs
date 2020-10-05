@@ -15,10 +15,10 @@ class ChoicesAssets extends \yii\web\AssetBundle{
             //'forceCopy' => YII_DEBUG,
         ];
     public $css = (YII_ENV_DEV ? [
-            'styles/base.css',
+            //'styles/base.css',
             'styles/choices.css',
         ] : [
-            'styles/base.min.css',
+            //'styles/base.min.css',
             'styles/choices.min.css',
         ]);
     public $js = (YII_ENV_DEV ? [

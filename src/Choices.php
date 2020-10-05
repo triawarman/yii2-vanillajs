@@ -42,6 +42,8 @@ use yii\helpers\Html;
  *      ],
  * ]); ?>
  * ```
+ * 
+ * and you can see other option at `yii\helpers\Html\dropDownList` 
  */
 class Choices extends \yii\widgets\InputWidget {
     /*
