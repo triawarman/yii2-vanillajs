@@ -5,6 +5,8 @@ Collection of vanilla javascript html-components
  Alternative of Bootstrap Alert, using `yii\bootstrap\Alert` as base code
   - **Choices.js**
 [jshjohnson/Choices](https://github.com/jshjohnson/Choices) is vanilla, lightweight (~19kb gzipped 🎉), configurable select box/text input plugin. Similar to Select2 and Selectize.
+  - **Modal**
+ Alternative of Bootstrap Modal but only pure css
 
 # License
 MIT
