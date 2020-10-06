@@ -50,13 +50,19 @@ class Modal extends \yii\base\Widget{
      * @var string of cascading style sheet.
      */
     private $defaultStyles = (YII_ENV_DEV ? '
+        /*
+        INFO: Disabled
+        [aria-hidden="true"] {
+            display: none;
+        }
+        */
+        .modal-toggler{
+            display: none;
+        }
         .modal-toggler:checked + .modal-container {
             opacity: 1;
             visibility: visible;
             transition: opacity 0.5s;
-        }
-        [aria-hidden="true"] {
-            display: none;
         }
         .modal-container {
             background: rgba(0, 0, 0, 0.75);
@@ -99,6 +105,7 @@ class Modal extends \yii\base\Widget{
             flex-shrink: 0;
         }
         .modal-container>.modal-box>.close{
+            cursor: pointer;
             position: absolute;
             font-size: 1.5rem;
             right: 0;
@@ -119,7 +126,7 @@ class Modal extends \yii\base\Widget{
         .modal-container>.modal-box footer {
             flex-shrink: 0;
         }
-        ' : '.modal-toggler:checked+.modal-container{opacity:1;visibility:visible;transition:opacity .5s}[aria-hidden="true"]{display:none}.modal-container{background:rgba(0,0,0,0.75);opacity:0;color:white;width:100%;height:100%;position:fixed;top:0;left:0;visibility:hidden;transition:opacity .5s,visibility 0s linear .5s;z-index:2}{close_any_where}.modal-container>.modal-box{position:absolute;top:50%;left:50%;border-radius:.5em;transform:translateX(-50%) translateY(-50%);display:flex;flex-direction:column;align-items:stretch;background:indianred;padding:1.3rem;right:0;bottom:0}.modal-container>.modal-box>header{padding:.7rem 0;flex-shrink:0}.modal-container>.modal-box>.close{position:absolute;font-size:1.5rem;right:0;top:0;padding:.5rem;float:right;font-weight:bold;line-height:1;color:#000;text-shadow:0 1px 0 #fff;opacity:.2}.modal-container>.modal-box>.content{flex-grow:1}.modal-container>.modal-box footer{flex-shrink:0}');
+        ' : '.modal-toggler{display:none}.modal-toggler:checked+.modal-container{opacity:1;visibility:visible;transition:opacity .5s}.modal-container{background:rgba(0,0,0,0.75);opacity:0;color:white;width:100%;height:100%;position:fixed;top:0;left:0;visibility:hidden;transition:opacity .5s,visibility 0s linear .5s;z-index:2}{close_any_where}.modal-container>.modal-box{position:absolute;top:50%;left:50%;border-radius:.5em;transform:translateX(-50%) translateY(-50%);display:flex;flex-direction:column;align-items:stretch;background:indianred;padding:1.3rem;right:0;bottom:0}.modal-container>.modal-box>header{padding:.7rem 0;flex-shrink:0}.modal-container>.modal-box>.close{cursor: pointer;position:absolute;font-size:1.5rem;right:0;top:0;padding:.5rem;float:right;font-weight:bold;line-height:1;color:#000;text-shadow:0 1px 0 #fff;opacity:.2}.modal-container>.modal-box>.content{flex-grow:1}.modal-container>.modal-box footer{flex-shrink:0}');
     /**
      * @var string the body content in the modal component. Note that anything between
      * the [[begin()]] and [[end()]] calls of the Modal widget will also be treated
@@ -249,7 +256,7 @@ class Modal extends \yii\base\Widget{
         
         if($this->staticMessage || isset($this->body)){
             if($this->clickOuterModalCloseModal)
-                $this->defaultStyles = str_replace('{close_any_where}', '.modal-container>.close-area{width: 100%;height: 100%;}', $this->defaultStyles);
+                $this->defaultStyles = str_replace('{close_any_where}', '.modal-container>.close-area{height: 100%;width: 100%;position: fixed;}', $this->defaultStyles);
             else
                 $this->defaultStyles = str_replace('{close_any_where}', '', $this->defaultStyles);
             if(is_string($this->styles))
