@@ -238,22 +238,24 @@ class Modal extends \yii\base\Widget{
                 echo Html::endTag('div') . "\n"; //end window modal
             echo Html::endTag('section') . "\n"; //end overlay modal
         }
-        elseif(!isset($this->body))
+        elseif(isset($this->body))
             echo self::widget([
-                'body' => $this->body,
+                //'body' => $this->body,
                 'closeButton' => $this->closeButton,
                 'options' => $this->options,
                 'tittle' => $this->tittle,
                 'toggleButton' => $this->toggleButton
             ]);
         
-        if($this->clickOuterModalCloseModal)
-            $this->defaultStyles = str_replace('{close_any_where}', '.modal-container>.close-area{width: 100%;height: 100%;}', $this->defaultStyles);
-        else
-            $this->defaultStyles = str_replace('{close_any_where}', '', $this->defaultStyles);
-        if(is_string($this->styles))
-            $this->defaultStyles .= $this->styles;
-        
-        $this->getView()->registerCss($this->defaultStyles);
+        if($this->staticMessage || isset($this->body)){
+            if($this->clickOuterModalCloseModal)
+                $this->defaultStyles = str_replace('{close_any_where}', '.modal-container>.close-area{width: 100%;height: 100%;}', $this->defaultStyles);
+            else
+                $this->defaultStyles = str_replace('{close_any_where}', '', $this->defaultStyles);
+            if(is_string($this->styles))
+                $this->defaultStyles .= $this->styles;
+
+            $this->getView()->registerCss($this->defaultStyles);
+        }
     }
 }
