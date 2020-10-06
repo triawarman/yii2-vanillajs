@@ -173,7 +173,7 @@ class Modal extends \yii\base\Widget{
     /**
      * @var boolean that render default button for shows modal window.
      */
-    public $toggleButton = true;
+    public $toggleButton = false;
     
     /**
      * Initializes the widget.
