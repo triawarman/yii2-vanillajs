@@ -190,14 +190,18 @@ class Modal extends \yii\base\Widget{
                 throw new InvalidConfigException(\yii::t('ATTRIBUTE_MUST_BE_A_STRING', ['attribute' => 'tittle']));
         }
         
+        if(!isset($this->options['id']))
+            $this->options['id'] = $this->id;
+        
         if($this->staticMessage || isset($this->body)) {
+            $togglerId = 'toggler-'.$this->options['id'];
             if($this->toggleButton)
-                echo '<label for="'.$this->id.'">'.\yii::t('app', 'SHOW_THE', ['paramater' => 'Modal']).'</label>';
+                echo '<label for="'.$togglerId.'">'.\yii::t('app', 'SHOW_THE', ['paramater' => 'Modal']).'</label>';
             
-            echo '<input id="'.$this->id.'" class="modal-toggler" type="checkbox" aria-hidden="true">';
+            echo '<input id="'.$togglerId.'" class="modal-toggler" type="checkbox" aria-hidden="true">';
             Html::addCssClass($this->options, ['modal-container']);
             echo Html::beginTag('section', $this->options) . "\n"; //begin overlay modal
-                echo '<label for="'.$this->id.'" class="close-area"></label>';
+                echo '<label for="'.$togglerId.'" class="close-area"></label>';
                 
                 echo Html::beginTag('div', ['class' => 'modal-box']) . "\n"; //begin window modal
                     echo (isset($this->tittle) ? '<header><h3>'.$this->tittle.'</h3></header>' : '');
@@ -205,7 +209,7 @@ class Modal extends \yii\base\Widget{
                         ArrayHelper::remove($closeButton, 'tag');
                         ArrayHelper::remove($closeButton, 'label');
                         ArrayHelper::remove($closeButton, 'type');
-                        $closeButton = array_merge($closeButton, [ 'for' => $this->id ]);
+                        $closeButton = array_merge($closeButton, [ 'for' => $togglerId ]);
                         Html::addCssClass($closeButton, ['close']);
                         echo Html::tag('label', '&times;', $closeButton). "\n";
                     }
