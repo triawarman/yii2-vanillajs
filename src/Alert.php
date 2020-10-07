@@ -64,6 +64,13 @@ use yii\helpers\Html;
  * 
  */
 class Alert extends \yii\base\Widget{
+    const ALERT_TYPE_ERROR = 'error';
+    const ALERT_TYPE_DANGER = 'danger';
+    const ALERT_TYPE_SUCCESS = 'success';
+    const ALERT_TYPE_INFO = 'info';
+    const ALERT_TYPE_WARNING = 'warning';
+    
+    
     /**
     * @var boolean indicate that Alert use html element to showing message.
     */
@@ -80,14 +87,14 @@ e.forEach(el => el.addEventListener("click", event => {
      * @var array the alert types configuration for the flash messages.
      * This array is setup as $key => $value, where:
      * - key: the name of the session flash variable
-     * - value: the bootstrap alert type (i.e. danger, success, info, warning)
+     * - value: the css class that will applied to alert html-component.
      */
-    public $alertTypes = [
-        'error'   => 'alert-danger',
-        'danger'  => 'alert-danger',
-        'success' => 'alert-success',
-        'info'    => 'alert-info',
-        'warning' => 'alert-warning'
+    public $alertStyles = [
+        self::ALERT_TYPE_ERROR   => 'alert-danger',
+        self::ALERT_TYPE_DANGER  => 'alert-danger',
+        self::ALERT_TYPE_SUCCESS => 'alert-success',
+        self::ALERT_TYPE_INFO    => 'alert-info',
+        self::ALERT_TYPE_WARNING => 'alert-warning'
     ];
     /**
      * @var string the body content in the alert component. Note that anything between
@@ -147,28 +154,17 @@ e.forEach(el => el.addEventListener("click", event => {
         }
         
         if($this->staticMessage || isset($this->body)){
-            //if(!isset($this->options['class']))
-            Html::addCssClass($this->options, ['alert', 'fade', 'in']);
-            if ($this->closeButton !== false) {
-                $this->closeButton = array_merge([
-                    //'data-dismiss' => 'alert',
-                    //'aria-hidden' => 'true',
-                    'class' => 'close',
-                ], $this->closeButton);
-            }
-            
+            Html::addCssClass($this->options, ['alert']);
             echo Html::beginTag('div', $this->options) . "\n";
             
-            if (($closeButton = $this->closeButton) !== false) {
-                $tag = ArrayHelper::remove($closeButton, 'tag', 'button');
-                $label = ArrayHelper::remove($closeButton, 'label', '&times;');
-                if ($tag === 'button' && !isset($closeButton['type'])) {
-                    $closeButton['type'] = 'button';
-                }
-                echo Html::tag($tag, $label, $closeButton). "\n";
-            }
-            else {
-                echo null. "\n";
+            Html::addCssClass($this->closeButton, 'close');
+            if (($options = $this->closeButton) !== false) {
+                $tag = ArrayHelper::remove($options, 'tag', 'button');
+                $label = ArrayHelper::remove($options, 'label', '&times;');
+                if ($tag === 'button' && !isset($options['type']))
+                    $options['type'] = 'button';
+                
+                echo Html::tag($tag, $label, $options). "\n";
             }
         }  
     }
@@ -204,7 +200,7 @@ e.forEach(el => el.addEventListener("click", event => {
             $appendClass = isset($this->options['class']) ? ' ' . $this->options['class'] : '';
             
             foreach ($flashes as $type => $flash) {
-                if (!isset($this->alertTypes[$type]))
+                if (!isset($this->alertStyles[$type]))
                     continue;
 
                 foreach ((array) $flash as $i => $message) {
@@ -213,7 +209,7 @@ e.forEach(el => el.addEventListener("click", event => {
                         'closeButton' => $this->closeButton,
                         'options' => array_merge($this->options, [
                             'id' => $this->getId() . '-' . $type . '-' . $i,
-                            'class' => $this->alertTypes[$type] . $appendClass,
+                            'class' => $this->alertStyles[$type] . $appendClass,
                             'yvjsScript' => false 
                         ]),
                     ]);
