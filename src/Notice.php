@@ -11,35 +11,39 @@ use yii\helpers\Html;
 /**
  * This code base are from yii\bootstrap\Alert and app\widget\Alert.
  * 
- * Alert renders an alert html-component.
+ * Notice renders an notice html-component.
  *
  * For example,
  *
  * ```php
- * echo Alert::widget([
+ * echo Notice::widget([
  *     'options' => [
- *         'class' => 'alert-info',
+ *         'class' => 'notice notice-info',
  *     ],
  *     'body' => 'Say hello...',
+ *     //or you can just write
+ *     'body' => \yii::$app->session->getFlash('postDeleted'),
+ *      //or
+ *      'body' => ['message1', 'message2']
  * ]);
  * ```
  *
  * The following example will show the content enclosed between the [[begin()]]
- * and [[end()]] calls within the alert box:
+ * and [[end()]] calls within the notice box:
  *
  * ```php
- * Alert::begin([
+ * Notice::begin([
  *     'options' => [
- *         'class' => 'alert-warning',
+ *         'class' => 'notice notice-warning',
  *     ],
  * ]);
  *
  * echo 'Say hello...';
  *
- * Alert::end();
+ * Notice::end();
  * ```
  * 
- * Alert can renders a message from session flash. All flash messages are displayed
+ * Notice can renders a message from session flash. All flash messages are displayed
  * in the sequence they were assigned using setFlash. You can set message as following:
  * 
  * ```php
@@ -57,26 +61,26 @@ use yii\helpers\Html;
  * To render these message, just write a simple 
  * 
  * ```php
- * echo Alert::widget();
+ * echo Notice::widget();
  * ```
  * 
  * or you can add some options array.
  * 
  */
-class Alert extends \yii\base\Widget{
-    const ALERT_TYPE_ERROR = 'error';
-    const ALERT_TYPE_DANGER = 'danger';
-    const ALERT_TYPE_SUCCESS = 'success';
-    const ALERT_TYPE_INFO = 'info';
-    const ALERT_TYPE_WARNING = 'warning';
-    
+class Notice extends \yii\base\Widget {
+    const NOTICE_TYPE_INFO = 'info';
+    const NOTICE_TYPE_SUCCESS = 'success';
+    const NOTICE_TYPE_CAUTION = 'caution';
+    const NOTICE_TYPE_WARNING = 'warning';
+    const NOTICE_TYPE_ERROR = 'error';
+    const NOTICE_TYPE_DANGER = 'danger';
     
     /**
-    * @var boolean indicate that Alert use html element to showing message.
+    * @var boolean indicate that Notice use html element to showing message.
     */
     private $staticMessage = false;
     /**
-     * @var string of javascript that handle Alert close button.
+     * @var string of javascript that handle Notice close button.
      */
     private $script = (YII_ENV_DEV ? 'var e = document.querySelectorAll("{$class}>button{$closeButtonClass}");
 e.forEach(el => el.addEventListener("click", event => {
@@ -84,21 +88,30 @@ e.forEach(el => el.addEventListener("click", event => {
     event.target.parentElement.remove();
 }));' : 'var e = document.querySelectorAll("{$class}>button{$closeButtonClass}"); e.forEach(el => el.addEventListener("click", event => {event.target.parentElement.remove();}));');
     /**
-     * @var array the alert types configuration for the flash messages.
+     * @var string css class for notice container
+     */
+    public $noticeClass = 'notice';
+    /**
+     * @var array the notice types configuration for the flash messages.
      * This array is setup as $key => $value, where:
      * - key: the name of the session flash variable
-     * - value: the css class that will applied to alert html-component.
+     * - value: the css class that will applied to notice html-component.
      */
     public $alertStyles = [
-        self::ALERT_TYPE_ERROR   => 'alert-danger',
-        self::ALERT_TYPE_DANGER  => 'alert-danger',
-        self::ALERT_TYPE_SUCCESS => 'alert-success',
-        self::ALERT_TYPE_INFO    => 'alert-info',
-        self::ALERT_TYPE_WARNING => 'alert-warning'
+        self::NOTICE_TYPE_SUCCESS => 'success',
+        self::NOTICE_TYPE_INFO    => 'info',
+        self::NOTICE_TYPE_CAUTION => 'caution',
+        self::NOTICE_TYPE_WARNING => 'warning',
+        self::NOTICE_TYPE_ERROR   => 'error',
+        self::NOTICE_TYPE_DANGER  => 'danger',
     ];
     /**
-     * @var string the body content in the alert component. Note that anything between
-     * the [[begin()]] and [[end()]] calls of the Alert widget will also be treated
+     * @var boolean default true if you want to combine these both values that will result to "notice-success".
+     */
+    public $combineNoticeClassWithAlertStyles = true;
+    /**
+     * @var string the body content in the notice component. Note that anything between
+     * the [[begin()]] and [[end()]] calls of the Notice widget will also be treated
      * as the body content, and will be rendered before this.
      */
     public $body;
@@ -139,37 +152,56 @@ e.forEach(el => el.addEventListener("click", event => {
     /**
      * Initializes the widget.
      */
-    public function init(){
+    public function init() {
         parent::init();
         
-        if(isset($this->options['yvjsScript']))
-            if($this->options['yvjsScript'] == false){
+        $type = ($this->options['type'] ?? null);
+        
+        if(!empty($this->options['yvjsScript']))
+            if($this->options['yvjsScript'] == false) {
                 unset($this->options['yvjsScript']);
                 $this->script = null;
             }
-
-        if(isset($this->options['staticMessage'])){
+            
+        if(!empty($this->options['staticMessage'])) {
             $this->staticMessage = $this->options['staticMessage'];
             unset($this->options['staticMessage']);
         }
         
-        if($this->staticMessage || isset($this->body)){
-            Html::addCssClass($this->options, ['alert']);
-            echo Html::beginTag('div', $this->options) . "\n";
+        if(!empty($this->noticeClass))
+            Html::addCssClass($this->options, [$this->noticeClass]);
+
+        if($this->staticMessage || !empty($this->body)) {
+            $class = [];
+            if(!empty($this->options['class']) && is_array($this->options['class']))
+                $class = array_merge($class, $this->options['class']);
+            elseif(!empty($this->options['class']) && is_string($this->options['class']))
+                $class = array_merge($class, explode (' ', $this->options['class']));
+        
+            if(!empty($this->alertStyles[$type])) {
+                if(!empty($this->noticeClass))
+                    $class[] = ($this->combineNoticeClassWithAlertStyles ? ($this->noticeClass.'-'.$this->alertStyles[$type]) : $this->alertStyles[$type]);
+                else
+                    $class[] = $this->alertStyles[$type];
+            }
+
+            $this->options['class'] = $class;
+            $this->options['id'] = (!empty($this->noticeClass) ? ($this->noticeClass.'-') : '').$this->getId();
             
-            Html::addCssClass($this->closeButton, 'close');
+            echo Html::beginTag('div', $this->options) . "\n"; 
             if (($options = $this->closeButton) !== false) {
+                Html::addCssClass($options, 'close');
                 $tag = ArrayHelper::remove($options, 'tag', 'button');
                 $label = ArrayHelper::remove($options, 'label', '&times;');
-                if ($tag === 'button' && !isset($options['type']))
+                if ($tag === 'button' && empty($options['type']))
                     $options['type'] = 'button';
                 
                 echo Html::tag($tag, $label, $options). "\n";
             }
-        }  
+        }
     }
     
-     /**
+    /**
      * Set $this->body variable to null, because widget showing message of html element.
      * in page
      * 
@@ -189,47 +221,60 @@ e.forEach(el => el.addEventListener("click", event => {
     /**
      * Renders the widget.
      */
-    public function run(){
-        if($this->staticMessage || isset($this->body)){
+    public function run() {
+        if($this->staticMessage || !empty($this->body)) {
             echo "\n" . $this->body . "\n";
             echo "\n" . Html::endTag('div');
         }
-        elseif(!isset($this->body)){
+        elseif(empty($this->body)) {
             $session = \yii::$app->session;
             $flashes = $session->getAllFlashes();
-            $appendClass = isset($this->options['class']) ? ' ' . $this->options['class'] : '';
             
             foreach ($flashes as $type => $flash) {
-                if (!isset($this->alertStyles[$type]))
-                    continue;
-
-                foreach ((array) $flash as $i => $message) {
-                    echo self::widget([
-                        'body' => $message,
-                        'closeButton' => $this->closeButton,
-                        'options' => array_merge($this->options, [
-                            'id' => $this->getId() . '-' . $type . '-' . $i,
-                            'class' => $this->alertStyles[$type] . $appendClass,
-                            'yvjsScript' => false 
-                        ]),
-                    ]);
+                foreach ((array) $flash as $i => $messages) {
+                    if(is_string($messages))
+                        echo self::widget([
+                            'noticeClass' => $this->noticeClass,
+                            'body' => $messages,
+                            'closeButton' => $this->closeButton,
+                            'options' => array_merge($this->options, [
+                                //'id' => $id,
+                                //'class' => $class,
+                                'type' => $type,
+                                'yvjsScript' => false 
+                            ]),
+                        ]);
+                    else {
+                        foreach ($messages as $message)
+                            echo self::widget([
+                                'noticeClass' => $this->noticeClass,
+                                'body' => $message,
+                                'closeButton' => $this->closeButton,
+                                'options' => array_merge($this->options, [
+                                    //'id' => $id,
+                                    //'class' => $class,
+                                    'type' => $type,
+                                    'yvjsScript' => false 
+                                ]),
+                            ]);
+                    }
                 }
 
                 $session->removeFlash($type);
             }
         }
         
-        if(!is_null($this->script)){
-            if(!isset($this->options['class']))
-                $class = '.alert';
-            else{
+        if(!empty($this->script)) {
+            if(!empty($this->noticeClass))
+                $class = '.'.$this->noticeClass;
+            elseif(!empty($this->options['class'])) {
                 if(is_string($this->options['class']))
                     $class = '.'.str_replace(' ', '.', $this->options['class']);
                 else
                     $class = '.'.implode('.', $this->options['class']);
             }
             
-            if(!isset($this->closeButton['class']))
+            if(empty($this->closeButton['class']))
                 $closeButtonClass = '.close';
             else
                 $closeButtonClass = '.'.str_replace(' ', '.', $this->closeButton['class']);
