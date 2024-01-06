@@ -82,15 +82,18 @@ class Notice extends \yii\base\Widget {
     /**
      * @var string of javascript that handle Notice close button.
      */
+    private $script = 'var e = document.querySelectorAll("{$class}>button{$closeButtonClass}"); e.forEach(el => el.addEventListener("click", event => {event.target.parentElement.remove();}));';
+    /*
     private $script = (YII_ENV_DEV ? 'var e = document.querySelectorAll("{$class}>button{$closeButtonClass}");
 e.forEach(el => el.addEventListener("click", event => {
-    //console.log(event.target);
+    console.log(event.target);
     event.target.parentElement.remove();
 }));' : 'var e = document.querySelectorAll("{$class}>button{$closeButtonClass}"); e.forEach(el => el.addEventListener("click", event => {event.target.parentElement.remove();}));');
+    */
     /**
      * @var string css class for notice container
      */
-    public $noticeClass = 'notice';
+    public $baseCssClass = 'notice';
     /**
      * @var array the notice types configuration for the flash messages.
      * This array is setup as $key => $value, where:
@@ -168,10 +171,10 @@ e.forEach(el => el.addEventListener("click", event => {
             unset($this->options['staticMessage']);
         }
         
-        if(!empty($this->noticeClass))
-            Html::addCssClass($this->options, [$this->noticeClass]);
+        if(!empty($this->baseCssClass))
+            Html::addCssClass($this->options, [$this->baseCssClass]);
 
-        if($this->staticMessage || !empty($this->body)) {
+        if($this->staticMessage || (!empty($this->body)) && is_string($this->body)) {
             $class = [];
             if(!empty($this->options['class']) && is_array($this->options['class']))
                 $class = array_merge($class, $this->options['class']);
@@ -179,14 +182,15 @@ e.forEach(el => el.addEventListener("click", event => {
                 $class = array_merge($class, explode (' ', $this->options['class']));
         
             if(!empty($this->alertStyles[$type])) {
-                if(!empty($this->noticeClass))
-                    $class[] = ($this->combineNoticeClassWithAlertStyles ? ($this->noticeClass.'-'.$this->alertStyles[$type]) : $this->alertStyles[$type]);
+                if(!empty($this->baseCssClass))
+                    $class[] = ($this->combineNoticeClassWithAlertStyles ? ($this->baseCssClass.'-'.$this->alertStyles[$type]) : $this->alertStyles[$type]);
                 else
                     $class[] = $this->alertStyles[$type];
             }
-
+            unset($this->options['type']);
+            
             $this->options['class'] = $class;
-            $this->options['id'] = (!empty($this->noticeClass) ? ($this->noticeClass.'-') : '').$this->getId();
+            $this->options['id'] = (!empty($this->baseCssClass) ? ($this->baseCssClass.'-') : '').$this->getId();
             
             echo Html::beginTag('div', $this->options) . "\n"; 
             if (($options = $this->closeButton) !== false) {
@@ -199,6 +203,8 @@ e.forEach(el => el.addEventListener("click", event => {
                 echo Html::tag($tag, $label, $options). "\n";
             }
         }
+        else
+            $this->script = null;
     }
     
     /**
@@ -223,32 +229,35 @@ e.forEach(el => el.addEventListener("click", event => {
      */
     public function run() {
         if($this->staticMessage || !empty($this->body)) {
-            echo "\n" . $this->body . "\n";
-            echo "\n" . Html::endTag('div');
+            if(is_string($this->body)) {
+                echo "\n" . $this->body . "\n";
+                echo "\n" . Html::endTag('div');
+            }
+            else
+                foreach ($this->body as $message) {
+                    echo self::widget([
+                        'baseCssClass' => $this->baseCssClass,
+                        'body' => $message,
+                        'closeButton' => $this->closeButton,
+                        'options' => array_merge($this->options, [
+                            //'id' => $id,
+                            //'class' => $class,
+                            'type' => ($type ?? null),
+                            'yvjsScript' => false 
+                        ]),
+                    ]);
+                }
         }
-        elseif(empty($this->body)) {
+        else {
             $session = \yii::$app->session;
-            $flashes = $session->getAllFlashes();
+            //$flashes = $session->getAllFlashes();
             
-            foreach ($flashes as $type => $flash) {
-                foreach ((array) $flash as $i => $messages) {
-                    if(is_string($messages))
+            if(!empty($flashes = $session->getAllFlashes()))
+                foreach ($flashes as $type => $flash) {
+                    if(is_string($flash)) {
                         echo self::widget([
-                            'noticeClass' => $this->noticeClass,
-                            'body' => $messages,
-                            'closeButton' => $this->closeButton,
-                            'options' => array_merge($this->options, [
-                                //'id' => $id,
-                                //'class' => $class,
-                                'type' => $type,
-                                'yvjsScript' => false 
-                            ]),
-                        ]);
-                    else {
-                        foreach ($messages as $message)
-                            echo self::widget([
-                                'noticeClass' => $this->noticeClass,
-                                'body' => $message,
+                                'baseCssClass' => $this->baseCssClass,
+                                'body' => $flash,
                                 'closeButton' => $this->closeButton,
                                 'options' => array_merge($this->options, [
                                     //'id' => $id,
@@ -258,15 +267,46 @@ e.forEach(el => el.addEventListener("click", event => {
                                 ]),
                             ]);
                     }
-                }
+                    elseif(is_array($flash)) {
+                        foreach ((array) $flash as $i => $messages) {
+                            if(is_string($messages)) {
+                                echo self::widget([
+                                    'baseCssClass' => $this->baseCssClass,
+                                    'body' => $messages,
+                                    'closeButton' => $this->closeButton,
+                                    'options' => array_merge($this->options, [
+                                        //'id' => $id,
+                                        //'class' => $class,
+                                        'type' => $type,
+                                        'yvjsScript' => false 
+                                    ]),
+                                ]);
+                            }
+                            else {
+                                foreach ($messages as $message) {
+                                    echo self::widget([
+                                        'baseCssClass' => $this->baseCssClass,
+                                        'body' => $message,
+                                        'closeButton' => $this->closeButton,
+                                        'options' => array_merge($this->options, [
+                                            //'id' => $id,
+                                            //'class' => $class,
+                                            'type' => $type,
+                                            'yvjsScript' => false 
+                                        ]),
+                                    ]);
+                                }
+                            }
+                        }
+                    }
 
-                $session->removeFlash($type);
-            }
+                    $session->removeFlash($type);
+                }
         }
         
         if(!empty($this->script)) {
-            if(!empty($this->noticeClass))
-                $class = '.'.$this->noticeClass;
+            if(!empty($this->baseCssClass))
+                $class = '.'.$this->baseCssClass;
             elseif(!empty($this->options['class'])) {
                 if(is_string($this->options['class']))
                     $class = '.'.str_replace(' ', '.', $this->options['class']);
@@ -281,7 +321,8 @@ e.forEach(el => el.addEventListener("click", event => {
             
             $this->script = str_replace('{$class}', $class, $this->script);
             $this->script = str_replace('{$closeButtonClass}', $closeButtonClass, $this->script);
-            $this->getView()->registerJs($this->script, $this->scriptPosition);
+            
+            $this->getView()->registerJs($this->script, $this->scriptPosition, hash('crc32', $this->script));
         }
     }
 }
